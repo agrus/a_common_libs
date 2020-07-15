@@ -125,7 +125,7 @@ module Redmine::FieldFormat
     end
 
     def validate_single_value(custom_field, value, customized=nil)
-      if (value =~ /^\d{4}-\d{2}-\d{2} \d{1,2}:\d{2}:\d{2}$|^\d{4}-\d{2}-\d{2} \d{1,2}:\d{2}$/ && (value.to_datetime rescue false))
+      if (value =~ /^\d{4}-\d{2}-\d{2} \d{1,2}:\d{2}(:\d{2})?( \+\d{4})?$/ && (value.to_datetime rescue false))
         []
       else
         [::I18n.t('activerecord.errors.messages.not_a_date')]
@@ -160,6 +160,7 @@ module Redmine::FieldFormat
 
 
   class AclPercentFormat < Numeric
+    include ActionView::Helpers::NumberHelper
     add 'acl_percent'
     self.form_partial = 'custom_fields/formats/acl_percent'
     field_attributes :edit_tag_style, :min_value, :max_value
@@ -220,7 +221,7 @@ module Redmine::FieldFormat
     end
 
     def format_value(view, custom_field, value, html=false)
-      vl = view.number_with_precision(value, delimiter: ' ', strip_insignificant_zeros: true, precision: 2, separator: '.')
+      vl = number_with_precision(value, delimiter: ' ', strip_insignificant_zeros: true, precision: 2, separator: '.')
       if html && custom_field.edit_tag_style.present? && Redmine::Plugin.installed?(:usability)
         min = custom_field.min_value.present? ? custom_field.min_value.to_f : 0.0
         max = custom_field.max_value.present? ? custom_field.max_value.to_f : 100.0
