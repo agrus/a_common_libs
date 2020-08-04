@@ -170,7 +170,8 @@
       var datetimepickerOptions={
         norange: true,
         animation: false,
-        formatDateTime: 'YYYY-MM-DD HH:mm',
+        <%zone = User.current.time_zone%>
+        formatDateTime: 'YYYY-MM-DD HH:mm<%=zone ? " " + zone.formatted_offset(false).to_s : ""%>',
         formatDecoreDateTimeWithYear: 'YYYY-MM-DD HH:mm',
         timepicker: true,
         timepickerOptions: {
@@ -184,6 +185,10 @@
           ru: {
             'Clear': 'Очистить'
           }
+        },
+        onOkButtonClick: function () {
+            var date = this.startinput.val() + "<%=zone ? " " + zone.formatted_offset(false).to_s : ''%>";
+            this.startinput.val(date);
         },
         yearsLine: false,
         clearButtonInButton: true

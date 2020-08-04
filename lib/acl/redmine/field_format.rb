@@ -125,10 +125,10 @@ module Redmine::FieldFormat
     end
 
     def validate_single_value(custom_field, value, customized=nil)
-      if (value =~ /^\d{4}-\d{2}-\d{2} \d{1,2}:\d{2}(:\d{2})?( \+\d{2}:?\d{2})?$/ && (value.to_datetime rescue false))
+      if (value =~ /^\d{4}-\d{2}-\d{2} \d{1,2}:\d{2}(:\d{2})?( (\+|\-)\d{2}:?\d{2})?$|^\d{2}\.\d{2}\.\d{4} \d{1,2}:\d{2}( .\d{2}:?\d{2})?$/ && (value.to_datetime rescue false))
         []
       else
-        [::I18n.t('activerecord.errors.messages.not_a_date')]
+        [::I18n.t('activerecord.errors.messages.not_a_date (' + value.to_s + ')')]
       end
     end
 
