@@ -4,7 +4,7 @@ Contains:
   * Some helper methods and global functionality for RMPlus plugins
   * Tricks and hacks to speedup redmine (we need to rewrite redmine core, to make it faster, so, just tricks and hacks)
 
-Updated to verison 2.4.6 from FreeBSD ports
+Version for redmine 4.x
 
 #### Plugin for Redmine
 
