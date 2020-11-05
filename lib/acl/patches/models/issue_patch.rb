@@ -1,17 +1,11 @@
 module Acl::Patches::Models
   module IssuePatch
     def self.included(base)
-      base.send :include, InstanceMethods
-      base.extend(ClassMethods)
+      base.send :prepend, InstanceMethods
+      base.send :prepend, ClassMethods
 
       base.class_eval do
         attr_accessor :acl_cf_casted_values
-        class << self
-          alias_method_chain :visible_condition, :acl
-          alias_method_chain :allowed_target_projects, :acl
-        end
-
-        alias_method_chain :safe_attributes=, :acl
 
         safe_attributes 'custom_field_values_append',
                         'custom_field_values_delete',
@@ -20,8 +14,8 @@ module Acl::Patches::Models
     end
 
     module ClassMethods
-      def allowed_target_projects_with_acl(user=User.current, current_project=nil)
-        sc = allowed_target_projects_without_acl(user, current_project)
+      def allowed_target_projects(user=User.current, current_project=nil)
+        sc = super(user, current_project)
         fp = user.favourite_project
         if fp.present?
           sc.order("case when #{Project.table_name}.id = #{fp.id} then 0 else 1 end")
@@ -167,8 +161,8 @@ module Acl::Patches::Models
             .select("#{CustomValue.table_name}.*, cv.cnt")
       end
 
-      def visible_condition_with_acl(user, options={})
-        original = "(#{visible_condition_without_acl(user, options)})"
+      def visible_condition(user, options={})
+        original = "(#{super(user, options)})"
         extended = acl_extend_issue_visibility(user, options)
         limit = acl_limit_issue_visibility(user, options)
         if extended.present?
@@ -189,7 +183,7 @@ module Acl::Patches::Models
     end
 
     module InstanceMethods
-      def safe_attributes_with_acl=(attrs, user=User.current)
+      def safe_attributes=(attrs, user=User.current)
         if attrs.present?
           editable_custom_field_ids = editable_custom_field_values(user).map {|v| v.custom_field_id.to_s}
           if attrs['custom_field_values_append'].present?
@@ -205,7 +199,7 @@ module Acl::Patches::Models
           end
         end
 
-        send :safe_attributes_without_acl=, attrs, user
+        send :super=, attrs, user
       end
     end
   end

@@ -4,15 +4,14 @@ module Acl::Patches::Controllers
       base.send :include, InstanceMethods
 
       base.class_eval do
-        alias_method_chain :show, :acl
         skip_before_action :authorize, only: [:acl_cf_trimmed_all, :acl_edit_form]
       end
     end
 
     module InstanceMethods
-      def show_with_acl
+      def show
         prepend_view_path File.join(Redmine::Plugin.find(:a_common_libs).directory, 'app', 'views', 'acl_prepended_views')
-        show_without_acl
+        super
       end
 
       def acl_edit_form
@@ -43,6 +42,7 @@ module Acl::Patches::Controllers
 
         render layout: false
       end
+
     end
   end
 end

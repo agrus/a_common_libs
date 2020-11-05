@@ -1,16 +1,13 @@
 module Acl::Patches::Helpers
   module CustomFieldsHelperPatch
     def self.included(base)
-      base.send :include, InstanceMethods
+      base.send :prepend, InstanceMethods
 
-      base.class_eval do
-        alias_method_chain :show_value, :acl
-      end
     end
 
     module InstanceMethods
-      def show_value_with_acl(custom_value, html=true)
-        return show_value_without_acl(custom_value, html) unless html
+      def alias_method_chain(custom_value, html=true)
+        return super(custom_value, html) unless html
 
         trimmed = false
         before_trim_size = 0
@@ -29,7 +26,7 @@ module Acl::Patches::Helpers
           custom_value.value = custom_value.value[0..2]
         end
 
-        res = show_value_without_acl(custom_value, html)
+        res = super(custom_value, html)
 
         if trimmed
           custom_value.value = original_values if original_values
@@ -42,47 +39,3 @@ module Acl::Patches::Helpers
     end
   end
 end
-
-# class Module
-#   def included(base)
-#     @included_to ||= []
-#     @included_to << base
-#   end
-#
-#   def included_to
-#     @included_to || []
-#   end
-# end
-
-# module A
-#   def a
-#     puts "original"
-#   end
-# end
-#
-# class B
-#   include A
-#
-#   def b
-#     puts "b"
-#   end
-# end
-#
-# puts B
-#
-# module APatch
-#   def self.included(base)
-#     base.send :include, I
-#     base.class_eval do
-#       alias_method_chain :a, :a
-#     end
-#   end
-#   module I
-#     def a_with_a
-#       puts "patched"
-#       a_without_a
-#     end
-#   end
-# end
-#
-# A.send :include, APatch

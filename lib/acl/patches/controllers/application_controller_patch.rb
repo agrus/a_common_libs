@@ -1,14 +1,12 @@
 module Acl::Patches::Controllers
   module ApplicationControllerPatch
     def self.included(base)
-      base.send(:include, InstanceMethods)
+      base.send(:prepend, InstanceMethods)
 
       base.class_eval do
         before_action :acl_store_mobile
 
         helper_method :acl_mobile_device?
-
-        alias_method_chain :find_current_user, :acl
       end
     end
 
@@ -35,8 +33,8 @@ module Acl::Patches::Controllers
         end
       end
 
-      def find_current_user_with_acl
-        usr = find_current_user_without_acl
+      def find_current_user
+        usr = super
 
         usr.api_request = api_request? if usr
         usr

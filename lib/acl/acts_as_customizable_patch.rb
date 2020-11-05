@@ -11,8 +11,8 @@ module Acl
     end
 
     module ClassMethods
-      def acts_as_customizable_with_acl(options={})
-        acts_as_customizable_without_acl(options)
+      def acts_as_customizable(options={})
+        super(options)
         return if self.included_modules.include?(Acl::ActsAsCustomizablePatch::AclInstanceMethods)
         send :include, Acl::ActsAsCustomizablePatch::AclInstanceMethods
       end
@@ -20,14 +20,6 @@ module Acl
 
     module AclInstanceMethods
       def self.included(base)
-        base.send :alias_method_chain, :custom_field_values=, :acl
-        base.send :alias_method_chain, :custom_field_values, :acl
-        base.send :alias_method_chain, :save_custom_field_values, :acl
-        base.send :alias_method_chain, :custom_field_value, :acl
-        base.send :alias_method_chain, :reassign_custom_field_values, :acl
-        base.send :alias_method_chain, :reset_custom_values!, :acl
-        base.send :alias_method_chain, :reload, :acl
-
         base.class_eval do
           attr_accessor :acl_cfv_hash
         end
@@ -46,7 +38,7 @@ module Acl
         @acl_available_custom_fields = vals
       end
 
-      def custom_field_values_with_acl
+      def custom_field_values
         @acl_cfv_hash ||= {}
         return @custom_field_values if @custom_field_values
 
@@ -82,12 +74,12 @@ module Acl
         end
       end
 
-      def custom_field_value_with_acl(c)
+      def custom_field_value(c)
         field_id = (c.is_a?(CustomField) ? c.id : c.to_i)
         custom_field_value_by_id(field_id).try(:value)
       end
 
-      def custom_field_values_with_acl=(values, action='=')
+      def custom_field_values=(values, action='=')
         values.stringify_keys.each do |(key, value)|
           cfv = self.custom_field_value_by_id(key)
           if cfv.present?
@@ -107,7 +99,7 @@ module Acl
         send :custom_field_values=, values, '-'
       end
 
-      def save_custom_field_values_with_acl
+      def save_custom_field_values
         (@acl_cfv_hash || {}).each do |(key, custom_field_value)|
           custom_field_value.acl_save
         end
@@ -118,7 +110,7 @@ module Acl
         true
       end
 
-      def reassign_custom_field_values_with_acl
+      def reassign_custom_field_values
         @acl_cfv_hash = {}
         @acl_available_custom_fields = nil
         if @custom_field_values
@@ -128,16 +120,16 @@ module Acl
         end
       end
 
-      def reset_custom_values_with_acl!
-        reset_custom_values_without_acl!
+      def reset_custom_values!
+        super
         @acl_cfv_hash = {}
         @acl_available_custom_fields = nil
       end
 
-      def reload_with_acl(*args)
+      def reload(*args)
         @acl_cfv_hash = {}
         @acl_available_custom_fields = nil
-        reload_without_acl(*args)
+        super(*args)
       end
     end
   end

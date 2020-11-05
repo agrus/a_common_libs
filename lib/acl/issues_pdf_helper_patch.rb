@@ -1,15 +1,11 @@
 module Acl
   module IssuesPdfHelperPatch
     def self.included(base)
-      base.send :include, InstanceMethods
-
-      base.class_eval do
-        alias_method_chain :fetch_row_values, :acl
-      end
+      base.send :prepend, InstanceMethods
     end
 
     module InstanceMethods
-      def fetch_row_values_with_acl(issue, query, level)
+      def fetch_row_values(issue, query, level)
         query.inline_columns.collect do |column|
           s = if column.is_a?(QueryCustomFieldColumn)
             cv = issue.visible_custom_field_values.detect {|v| v.custom_field_id == column.custom_field.id}

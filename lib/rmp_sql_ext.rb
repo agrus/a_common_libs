@@ -274,7 +274,7 @@ module ActiveRecord
   module Associations
     class JoinDependency
       class JoinAssociation
-        def build_constraint_with_rmp(klass, table, key, foreign_table, foreign_key)
+        def build_constraint(klass, table, key, foreign_table, foreign_key)
           if foreign_table.present? && table.present?
             bclass = table.name.classify.safe_constantize
             foreign_bclass = foreign_table.name.classify.safe_constantize
@@ -296,10 +296,8 @@ module ActiveRecord
             end
           end
 
-          build_constraint_without_rmp(klass, table, key, foreign_table, foreign_key)
+          super(klass, table, key, foreign_table, foreign_key)
         end
-
-        alias_method_chain :build_constraint, :rmp
       end
     end
 

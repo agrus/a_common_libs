@@ -1,21 +1,18 @@
 module Acl::UrlHelpersPatch
   def self.included(base)
-    base.send :include, InstanceMethods
-    base.class_eval do
-      alias_method_chain :uri_with_safe_scheme?, :acl
-    end
+    base.send :prepend, InstanceMethods
   end
 
   module InstanceMethods
-    def uri_with_safe_scheme_with_acl?(uri, schemes = ['http', 'https', 'ftp', 'mailto', nil])
+    def uri_with_safe_scheme?(uri, schemes = ['http', 'https', 'ftp', 'mailto', nil])
       if uri.to_s.downcase.split(':').first == 'mailto'
         begin
-          uri_with_safe_scheme_without_acl?(uri, schemes)
+          super(uri, schemes)
         rescue # just fix ruby bug
           true
         end
       else
-        uri_with_safe_scheme_without_acl?(uri, schemes)
+        super(uri, schemes)
       end
     end
   end

@@ -32,7 +32,7 @@ Redmine::Plugin.register :a_common_libs do
   end
 end
 
-ActiveRecord::Base.send :include, Acl::ActsAsCustomizablePatch
+ActiveRecord::Base.send :prepend, Acl::ActsAsCustomizablePatch
 
 Rails.application.config.to_prepare do
   require_dependency 'acl'
