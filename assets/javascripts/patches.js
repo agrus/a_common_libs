@@ -7,67 +7,69 @@
 // As a result, autocomplete behaviour is more user-friendly, and it avoids doing useless checks and
 // requests to server while the user is still typing.
 !(function($){
-  $.fn.popover.Constructor.prototype.applyPlacement = function(offset, placement){
+  if ($.fn.popover) {
+    $.fn.popover.Constructor.prototype.applyPlacement = function (offset, placement) {
 
-    var $tip = this.tip()
-        , width = $tip[0].offsetWidth
-        , height = $tip[0].offsetHeight
-        , actualWidth
-        , actualHeight
-        , delta
-        , replace
+      var $tip = this.tip()
+          , width = $tip[0].offsetWidth
+          , height = $tip[0].offsetHeight
+          , actualWidth
+          , actualHeight
+          , delta
+          , replace
 
-    $tip
-        .offset(offset)
-        .addClass(placement)
-        .addClass('in')
+      $tip
+          .offset(offset)
+          .addClass(placement)
+          .addClass('in')
 
-    actualWidth = $tip[0].offsetWidth
-    actualHeight = $tip[0].offsetHeight
+      actualWidth = $tip[0].offsetWidth
+      actualHeight = $tip[0].offsetHeight
 
-    if (placement == 'top' && actualHeight != height) {
-      offset.top = offset.top + height - actualHeight
-      replace = true
-    }
-
-    if (placement == 'bottom' || placement == 'top') {
-      delta = 0
-
-      if (offset.left < 0){
-        delta = offset.left * -2
-        offset.left = 0
-
-        $tip.css({ left: 0 })
-
-        actualWidth = $tip[0].offsetWidth
-        actualHeight = $tip[0].offsetHeight
+      if (placement == 'top' && actualHeight != height) {
+        offset.top = offset.top + height - actualHeight
+        replace = true
       }
 
-      this.replaceArrow(delta - width + actualWidth, actualWidth, 'left')
-    } else {
-      this.replaceArrow(actualHeight - height, actualHeight, 'top')
-    }
+      if (placement == 'bottom' || placement == 'top') {
+        delta = 0
 
-    if (replace) $tip.offset(offset)
-  };
+        if (offset.left < 0) {
+          delta = offset.left * -2
+          offset.left = 0
 
-  $.fn.popover.Constructor.prototype.replaceArrow = function(delta, dimension, position){
-    this
-        .arrow()
-        .css(position, delta ? (50 * (1 - (delta + this.arrow()[0].offsetWidth) / dimension) + "%") : '')
-  };
+          $tip.css({left: 0})
 
-  $.fn.popover.Constructor.prototype.old_init = $.fn.popover.Constructor.prototype.init;
-  $.fn.popover.Constructor.prototype.init = function(type, element, options) {
-    var res = this.old_init(type, element, options);
-    if (options && options.resize_elem) {
-      var v_this = this;
-      $(options.resize_elem).on('resize', function() {
-        if (v_this.tip().hasClass('in')) v_this.show();
-      });
-    }
-    return res;
-  };
+          actualWidth = $tip[0].offsetWidth
+          actualHeight = $tip[0].offsetHeight
+        }
+
+        this.replaceArrow(delta - width + actualWidth, actualWidth, 'left')
+      } else {
+        this.replaceArrow(actualHeight - height, actualHeight, 'top')
+      }
+
+      if (replace) $tip.offset(offset)
+    };
+
+    $.fn.popover.Constructor.prototype.replaceArrow = function (delta, dimension, position) {
+      this
+          .arrow()
+          .css(position, delta ? (50 * (1 - (delta + this.arrow()[0].offsetWidth) / dimension) + "%") : '')
+    };
+
+    $.fn.popover.Constructor.prototype.old_init = $.fn.popover.Constructor.prototype.init;
+    $.fn.popover.Constructor.prototype.init = function (type, element, options) {
+      var res = this.old_init(type, element, options);
+      if (options && options.resize_elem) {
+        var v_this = this;
+        $(options.resize_elem).on('resize', function () {
+          if (v_this.tip().hasClass('in')) v_this.show();
+        });
+      }
+      return res;
+    };
+  }
 })(window.jQuery);
 
 (function(){
@@ -87,6 +89,9 @@
     });
     $('#tab-content-' + name).show();
     $tab.addClass('selected');
+    $('#tab-content-' + name + ' a[id^="mod-w"]').each(function(){
+      this.id = this.id.slice(0,-this.id.split('-').slice(-1)[0].length)+name;
+    });
     //replaces current URL with the "href" attribute of the current link
     //(only triggered if supported by browser)
     // if ('replaceState' in window.history) {

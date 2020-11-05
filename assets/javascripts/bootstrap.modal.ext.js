@@ -63,7 +63,6 @@ RMPlus.LIB = (function (my) {
       $bs_modal.css('height','');
     }
 
-
     if ($bs_modal.attr('data-height') != undefined) {
       var ext_height = 0;
       if ($modal_footer.length == 1) {
@@ -84,6 +83,10 @@ RMPlus.LIB = (function (my) {
       var top = (w_height - px_height) / 2;
       $bs_modal.css('top', top);
       $modal_body.css('max-height', px_height-ext_height-paddings_h);
+
+      if ($bs_modal.attr('data-fixed-height')) {
+        $modal_body.css('height', px_height-ext_height-paddings_h);
+      }
 
 
       // if($modal_body.height() < modal_height-ext_height) {
@@ -174,6 +177,7 @@ RMPlus.LIB = (function (my) {
         $target.modal('show');
         return false;
       } else {
+        $link.attr('data-target', '#111');
         // load data self and trigger resize due loaded even present on bs.modal only sciense 3rd Bottstrap
         var $load_to = $target.find('.modal-body');
         if ($load_to.length == 0) { $load_to = $target }
@@ -195,7 +199,7 @@ RMPlus.LIB = (function (my) {
     }
     return true;
 
-  }
+  };
 
   return my;
 })(RMPlus.LIB || {});
@@ -224,8 +228,9 @@ $(document).ready(function () {
     });
   });
 
-  $(document.body).on('click','[data-toggle=modal]', function () {
-    return RMPlus.LIB.render_dynamic_bs_modal(this);
+  $(document.body).on('click','[data-toggle=modal]', function(e) {
+    e.preventDefault();
+    RMPlus.LIB.render_dynamic_bs_modal(this);
   });
 
 });

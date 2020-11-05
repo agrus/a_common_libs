@@ -21,7 +21,7 @@
  * Each tooltip is made of 2 parts:
  *  1) body (:after)
  *  2) arrow (:before)
- * 
+ *
  * Classes added:
  *  1) hint
  */
@@ -48,7 +48,7 @@
     opacity: 1; }
   .hint.like_hover:before, .hint.like_hover:after, [data-hint].like_hover:before, [data-hint].like_hover:after {
     visibility: visible;
-    opacity: 1; }  
+    opacity: 1; }
   .hint:before, [data-hint]:before {
     content: '';
     position: absolute;
@@ -70,7 +70,7 @@
  * source: hint-position.scss
  *
  * Defines the positoning logic for the tooltips.
- * 
+ *
  * Classes added:
  *  1) hint--top
  *  2) hint--bottom
@@ -158,13 +158,13 @@
  * source: hint-color-types.scss
  *
  * Contains tooltips of various types based on color differences.
- * 
+ *
  * Classes added:
  *  1) hint--error
  *  2) hint--warning
  *  3) hint--info
  *  4) hint--success
- *  
+ *
  */
 /**
  * Error
@@ -230,10 +230,10 @@
  * source: hint-always.scss
  *
  * Defines a persisted tooltip which shows always.
- * 
+ *
  * Classes added:
  *  1) hint--always
- *  
+ *
  */
 .hint--always:after, .hint--always:before {
   opacity: 1;
@@ -259,10 +259,10 @@
  * source: hint-rounded.scss
  *
  * Defines rounded corner tooltips.
- * 
+ *
  * Classes added:
  *  1) hint--rounded
- *  
+ *
  */
 .hint--rounded:after {
   border-radius: 4px; }

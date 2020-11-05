@@ -1,203 +1,501 @@
-$(document).ready(function () {
-
-  jQuery(document.body).on('click', '.link_to_modal', function () {
-    var this_link = jQuery(this);
-    var id = this_link.attr('id');
-    if (typeof id== 'undefined' || id.length == 0) {
-      var d = new Date();
-      var r = Math.random().toString().split('.')[1];
-      id = 'mw-'+d.getHours().toString()+d.getMinutes().toString()+d.getSeconds().toString()+d.getMilliseconds().toString()+'-'+r;
-      this.id = id;
-    }
-    var link = this_link.offset();
-    if (jQuery("#modal-"+id).length == 0){
-      click_out_class = this_link.hasClass('click_out') ? ' click_out' : ''
-      cur_window = jQuery('<div/>', {id: 'modal-'+id, class: 'modal_window'+click_out_class});
-    }
-    else {
-      cur_window = jQuery("#modal-"+id);
-    }
-    cur_window.prependTo(document.body);
-
-    if (this_link.hasClass('over_parent_window')) {
-      var parent_z_index = this_link.parents('div.modal_window:first').zIndex();
-      cur_window.zIndex(parent_z_index + 1);
-    }
-    else {
-      jQuery("div.modal_window").hide();
-    }
-
-    if ( (cur_window.text() != '' || cur_window.hasClass('permanent_modal_window') || this_link.hasClass('static_content_only')) && !this_link.hasClass('refreshable') ){
-      show_modal(id);
-    }
-    else{
-      this_link.addClass("invisible_link");
-      jQuery("#mw_content_load").css("left", link.left);
-      jQuery("#mw_content_load").css("top", link.top);
-      jQuery("#mw_content_load").show();
-      cur_window.load(this_link.attr("href"), function () { show_modal(id) });
-    }
-
-    return false;
+$(document).ready(function() {
+  $(document.body).on('click', '.link_to_modal:not(.mw-link)', function(e) {
+    e.preventDefault();
+    $(this).modal_window('click_to_link');
   });
-
-  $(document.body).on('click', function (event) {
-
-    var x = event.pageX;
-    var y = event.pageY;
-    var outside = false;
-    var target = $(event.target);
-    var ui_element = false;
-    var ui_parents = target.parents('.ui-datepicker-current, .ui-datepicker-prev, .ui-datepicker-next, .ui-widget');
-    // too many check and dirty code - due jquery bug while searching through ui elements
-    if (ui_parents.length > 0 || target.hasClass('ui-datepicker-current') || target.hasClass('ui-datepicker-prev') || target.hasClass('ui-datepicker-next') || target.hasClass('ui-widget')) {
-      ui_element = true;
-    }
-    // console.log('CLICK!!!!!');
-    // console.dir(target);
-    // console.dir(ui_parents);
-    // console.dir(target.closest('.ui-widget'));
-    $('[id^="modal-"]').filter( function () {
-      if ($(this).css('display') === 'none') {
-        return false;
-      }
-      return true;
-    }).each(function () {
-      var outside_each = false;
-      var m = $(this);
-      var left = (parseInt(this.getAttribute('data-left')) || 0);
-      var right = left + m.outerWidth() || 0;
-      var top = (parseInt(this.getAttribute('data-top')) || 0);
-      var bottom = top + m.outerHeight() || 0;
-      if (left > 0 && right > 0 && top > 0 && bottom > 0){
-        if (x < left || x > right || y < top || y > bottom){
-          outside_each = true;
-        }
-      }
-      else {
-        outside_each = true
-      }
-      outside = outside || outside_each;
-    });
-    if (!target.hasClass("modal_window") && target.parents("div.modal_window").length == 0 && outside && !ui_element) {
-      $("div.modal_window").hide().trigger('modal_window_hidden');
-    }
-  });
-
-  jQuery(document.body).on('mouseleave', "div.modal_window", function (evt) {
-    var mw_div = jQuery(evt.target)
-
-    if (!mw_div.hasClass('modal_window')) {
-      mw_div = mw_div.parents(".modal_window");
-    }
-
-    if (evt.target.nodeName.toLowerCase() !== "select" && !mw_div.hasClass("click_out")) {
-      jQuery(this).hide();
-      jQuery(this).trigger('modal_window_hidden');
-    }
-  })
-
-
-  jQuery(".close_modal_window").click(function(){
-    jQuery(this).parent().hide();
-    jQuery(this).parent().trigger('modal_window_hidden');
-  })
-
-
-  // jQuery("div.modal_window, div.permanent_modal_window").insertBefore(jQuery("div").first());
-
   $(document).ajaxStop(function() {
     // destroy orphans windows (who has no parent link)
-    jQuery("body > div.modal_window").each(function(){
-      var ln = jQuery(this).attr('id').split('modal-')[1]
-      if ( jQuery("#"+ln).length == 0 ) {
-        jQuery(this).remove();
-      }
-    });
-    // open windows which was loaded via ajax
-    jQuery('.for_open').trigger('click');
-    jQuery('.for_open').removeClass('for_open');
+    $("body > div.modal_window:not(.mw-dynamic)").modal_window('destroy_if_needed');
   });
-
-  // open windows once on first page load
-  jQuery('.for_open').trigger('click');
-  jQuery('.for_open').removeClass('for_open');
-
-  append_loader();
 });
 
+!function($) {
+  "use strict"; // jshint ;_;
 
-function append_loader () {
-  if (jQuery("#mw_content_load").length == 0) {
-    jQuery(document.body).append('<div id="mw_content_load" class="loader">&nbsp;</div>');
-  }
-}
+  var modal_window = function(element, options) {
+    this.current_id = RMPlus.Utils.create_guid();
+    this.$element = $(element);
+    this.$element.addClass('mw-link');
+    this.options = $.extend(true, {}, $.fn.modal_window.defaults, options || {});
 
+    this.loaded = false;
 
-function show_modal(id) {
-  jQuery("#"+id).removeClass("invisible_link");
-  jQuery("#mw_content_load").hide();
+    this.detect_link_options();
+    this.detect_modal_window();
+    this.detect_mask();
 
-  var link = jQuery('#'+id).offset();
-  link.top = link.top - jQuery(document).scrollTop();
-  link.left = link.left - jQuery(document).scrollLeft();
-  link.width = jQuery('#'+id).outerWidth();
-  link.height = jQuery('#'+id).outerHeight();
-
-  var cur_window = jQuery("#modal-"+id);
-  var mw_width = cur_window.outerWidth();
-  var mw_height = cur_window.outerHeight();
-  var doc_w = jQuery(window).width();
-  var doc_h = jQuery(window).height();
-  var margin = 7;
-
-  var mw_class_lr = 'mw-right';
-  var mw_class_tb = 'mw-bottom';
-
-  if (jQuery("#"+id).hasClass("block-preffered")) {
-    if ((jQuery("#"+id).hasClass("left-preffered") || doc_w < mw_width + link.left) && mw_width < link.left + link.width) {
-      link.left = link.left + link.width + margin;
+    if (this.options.link_opts.over_parent_window) {
+      this.$parent_window = this.$element.closest('div.modal_window');
+      if (this.$parent_window.length == 0) {
+        this.$parent_window = undefined;
+        this.options.link_opts.over_parent_window = false;
+      }
     }
-    else { link.width = -margin; }
 
-    if ((jQuery("#"+id).hasClass("top-preffered") || doc_h < mw_height + link.top + link.height) && mw_height < link.top) {
-      link.height = 0;
+    this.visible = false;
+    this.loading = false;
+    this.listen();
+  };
+
+  modal_window.prototype = {
+    constructor: modal_window,
+    detect_link_options: function() {
+      var classes = this.$element.attr('class');
+      if (classes && classes.length > 0) {
+        classes = classes.split(' ');
+        var cl = '';
+        for (var sch = 0; sch < classes.length; sch ++) {
+          cl = classes[sch].replace('-', '_');
+          if (this.options.link_opts[cl] == false) {
+            this.options.link_opts[cl] = true;
+          }
+        }
+      }
+    },
+    detect_modal_window: function() {
+      if (this.$window) { return; }
+
+      var $div = this.$element.data('window');
+
+      if (!$div) {
+        var id = this.$element.attr('id');
+        if (!id || id.length == 0) {
+          id = RMPlus.Utils.create_guid();
+        }
+        $div = $("#modal-" + id);
+      }
+
+      if ($div.length == 0) {
+        this.$window = $("<div id='modal-" + id + "' class='modal_window" + (this.options.link_opts.click_out ? ' click_out' : '') + "'></div>");
+      } else {
+        this.$window = $div;
+        if (this.$window.text() != '') { this.loaded = true; }
+      }
+
+      this._append_mobile_close();
+
+      if (this.options.link_opts.mw_mobile) {
+        this.$window.css('z-index', $.fn.modal_window.mobile_z_index);
+      } else {
+        this.$window.css('z-index', $.fn.modal_window.z_index);
+      }
+      this.$window.data('modal_window', this);
+      $(document.body).prepend(this.$window);
+    },
+    detect_mask: function() {
+      if (this.$mask) { return; }
+      this.$mask = $("<div class='mw-drop-mask'></div>");
+      $(document.body).prepend(this.$mask);
+    },
+    listen: function() {
+      this.$element.on('click.modal_window', $.proxy(this.click_to_link, this));
+      if (!this.options.link_opts.click_out) {
+        this.$window.on('mouseleave.modal_window', $.proxy(this.mouse_leave_window, this));
+      }
+      this.$mask.on('click.modal_window', $.proxy(this.hide, this));
+      this.$window.on('click.modal_window', '.mw-close', $.proxy(this.hide, this));
+      $(window).resize($.proxy(this.window_resize, this));
+    },
+
+    // EVENTS //
+    click_to_link: function(e) {
+      if (e) { e.preventDefault(); }
+      this.$window.data('modal_window', this);
+
+      if (this.options.link_opts.refreshable || (!this.loaded && !this.options.link_opts.static_content_only)) {
+        this.load();
+      } else {
+        this.show();
+      }
+    },
+    mouse_leave_window: function(evt) {
+      if (evt.target.nodeName.toLowerCase() != 'select' && !$.contains(this.$window[0], evt.target)) {
+        this.hide();
+      }
+    },
+    window_resize: function() {
+      if (this.visible) {
+        this.show();
+      }
+    },
+    // END EVENTS //
+
+    hide_windows: function($parent) {
+      $parent = $parent || $(document.body);
+      $parent.find('.modal_window:visible').not(this.$window).modal_window('hide');
+    },
+
+    show: function() {
+      var offset = {};
+      if (this.options.link_opts.mw_mobile) {
+        offset = this._get_position_mobile();
+        this.$window.css('height', offset.height);
+        this.$window.css('width', offset.width);
+      } else {
+        offset = this._get_position();
+      }
+
+      this.$window.css('left', offset.left);
+      this.$window.css('top', offset.top);
+      this.$window.removeClass(this.options.window_top_class + ' ' + this.options.window_bottom_class + ' ' + this.options.window_left_class + ' ' + this.options.window_right_class + ' ' + this.options.window_block_class);
+      this.$window.addClass(offset.class_lr).addClass(offset.class_tb).addClass(offset.class_block);
+
+      if (!this.visible) {
+        if (this.options.link_opts.over_parent_window) {
+          this.$window.zIndex(this.$parent_window.zIndex() + 2);
+        }
+        this.$window.show().trigger('modal_window_shown');
+        this.show_mask();
+        this.$element.trigger('modal_window_shown');
+        this.visible = true;
+
+        this.$window.find('input, select, textarea').filter(':visible:first').focus();
+
+        if (this.options.link_opts.over_parent_window) {
+          this.hide_windows(this.$parent_window);
+        } else {
+          this.hide_windows();
+        }
+      }
+    },
+    hide: function() {
+      if (this.visible) {
+        this.$window.hide().trigger('modal_window_hidden');
+        this.$element.trigger('modal_window_hidden');
+        this.hide_mask();
+        this.visible = false;
+      }
+    },
+    show_mask: function() {
+      if (this.$window.prev()[0] !== this.$mask[0]) {
+        this.$window.before(this.$mask);
+      }
+      this.$mask.zIndex(this.$window.zIndex() - 1);
+      this.$mask.css(this._make_mask_css()).addClass('mw-mask-show');
+
+      $(window).on('resize.modal_window.' + this.current_id, $.proxy(function() {
+        this.$mask.css(this._make_mask_css());
+      }, this));
+    },
+    hide_mask: function() {
+      this.$mask.removeClass('mw-mask-show');
+      $(window).off('resize.modal_window.' + this.current_id);
+    },
+    load: function() {
+      if (this.loading) { return; }
+      this.loading = true;
+      this.append_loader();
+      var ajax_params = {};
+
+      if (this.$element[0].tagName == 'A' || this.$element.attr('data-href')) {
+        ajax_params.url = this.$element.attr('href') || this.$element.attr('data-href');
+        ajax_params.type = (this.$element.attr('data-method') || this.$element.attr('data-modal-method') || '').toUpperCase() || 'GET';
+        if (this.$element.attr('data-callback')) {
+          var clb = this.$element.attr('data-callback');
+          ajax_params.data = eval(clb);
+        }
+      } else {
+        var $frm = this.$element.closest('form');
+        ajax_params.url = $frm.attr('action');
+        ajax_params.data = $frm.serialize();
+        ajax_params.type = ($frm.attr('method') || '').toUpperCase() || 'GET';
+      }
+
+      if ($.fn.jquery >= '1.9') {
+        ajax_params.method = ajax_params.type;
+        delete ajax_params.type;
+      }
+
+      $.ajax(ajax_params).always($.proxy(function(html) { this.complete_load(html.responseText || html); }, this));
+    },
+    append_loader: function() {
+      var hide_obj = this.$element;
+      if (this.options.link_opts.parent_loader) {
+        hide_obj = this.$element.closest('.parent_loader');
+      }
+      var offset = hide_obj.offset();
+      var h = hide_obj.outerHeight();
+      var w = hide_obj.outerWidth();
+      hide_obj.addClass('invisible_link');
+      this.$loader_object = hide_obj;
+
+      if (!this.$loader) {
+        this.$loader = $('<div class="mw_loader loader">&nbsp;</div>');
+      }
+      $(document.body).append(this.$loader);
+      this.$loader.css('left', offset.left)
+          .css('top', offset.top)
+          .css('width', w)
+          .css('height', h)
+          .show();
+    },
+    remove_loader: function() {
+      if (this.$loader_object) {
+        this.$loader_object.removeClass('invisible_link');
+        this.$loader_object = undefined;
+      }
+
+      if (this.$loader) {
+        this.$loader.remove();
+      }
+    },
+    complete_load: function(result_data) {
+      this.remove_loader();
+      this.$window.html(result_data);
+      this._append_mobile_close();
+      this.loading = false;
+      this.loaded = true;
+      this.show();
+    },
+    destroy_if_needed: function() {
+      if (this.$window && this.$element && !$.contains(document.documentElement, this.$element[0])) {
+        this.destroy();
+      }
+    },
+    destroy: function() {
+      this.$window.remove();
+      this.$window = undefined;
+      this.$mask.remove();
+      this.$mask = undefined;
+      this.$element.removeClass('mw-link');
+      this.$element.off('.modal_window').removeData('modal_window');
+      $(window).off('resize.modal_window.' + this.current_id);
+      this.$element = undefined;
+    },
+
+
+    _get_position: function(rect) {
+      var scroll = { top: $(document).scrollTop(), left: $(document).scrollLeft() };
+      var offset = rect;
+
+      if (!offset) {
+        offset = this.$element.offset();
+        offset.top = offset.top - scroll.top;
+        offset.left = offset.left - scroll.left;
+      }
+
+      offset.width = offset.width || this.$element.outerWidth();
+      offset.height = offset.height || this.$element.outerHeight();
+
+      var mw_width = this.$window.outerWidth();
+      var mw_height = this.$window.outerHeight();
+      var doc_w = $(window).outerWidth();
+      var doc_h = $(window).outerHeight();
+      var margin = 7;
+
+      offset.class_lr = offset.width == 0 ? '' : this.options.window_right_class;
+      offset.class_tb = offset.width == 0 ? '' : this.options.window_bottom_class;
+      offset.class_block = '';
+
+      if (this.options.link_opts.block_preferred) {
+        offset.class_block = this.options.window_block_class;
+        if ((this.options.link_opts.left_preferred || doc_w < mw_width + offset.left) && mw_width < offset.left + offset.width) {
+          offset.left = offset.left + offset.width + margin;
+        } else { offset.width = -margin; }
+
+        if ((this.options.link_opts.top_preferred || doc_h < mw_height + offset.top + offset.height) && mw_height < offset.top) {
+          offset.height = 0;
+        } else { offset.top = offset.top + offset.height; }
+      }
+
+      if ((this.options.link_opts.left_preferred || doc_w < mw_width + offset.left + offset.width + margin) && mw_width < offset.left) {
+        // try to display left if preferred left or no space at right
+        offset.left = offset.left - margin - mw_width + scroll.left;
+        offset.class_lr = this.options.window_left_class;
+      } else {
+        offset.left = offset.left + offset.width + margin + scroll.left;
+      }
+
+      if ((this.options.link_opts.top_preferred || doc_h < offset.top + mw_height - offset.height) && mw_height < offset.top + offset.height) {
+        // try to display as preferred no space bottom or top-preferred and
+        offset.top = offset.top + scroll.top + offset.height - mw_height;
+        offset.class_tb = this.options.window_top_class;
+      } else {
+        offset.top = offset.top + scroll.top;
+      }
+      delete offset.width;
+      delete offset.height;
+
+      return offset;
+    },
+    _get_position_mobile: function () {
+      var offset = {};
+
+      offset.top = 50;
+      offset.left = 0;
+      offset.width = $(window).outerWidth();
+      offset.height = $(window).outerHeight() - 50;
+
+      offset.class_lr = '';
+      offset.class_tb = '';
+      offset.class_block = '';
+
+      return offset;
+    },
+    _append_mobile_close: function () {
+      if (this.options.link_opts.mw_mobile) {
+        this.$window.addClass('mw-mobile');
+
+        if (this.$window.find('.mw-close').length == 0) {
+          this.$window.prepend('<div class="mw-close fa"></div>');
+        }
+      }
+    },
+    _make_mask_css: function() {
+      return {
+        width  : Math.max(document.documentElement.scrollWidth,  $(window).width()),
+        height : Math.max(document.documentElement.scrollHeight, $(window).height())
+      }
     }
-    else { link.top = link.top + link.height; }
-  }
+  };
 
-  // right from element - is default
-  cur_window.css("left", link.left+link.width+margin+jQuery(document).scrollLeft());
+  $.fn.modal_window = function(option) {
+    return this.each(function() {
+      var $this = $(this)
+          , data = $this.data('modal_window')
+          , options = typeof option == 'object' && option;
+      if (!data) {
+        if ($this.hasClass('modal_window')) { return; }
+        $this.data('modal_window', (data = new modal_window(this, options)));
+      }
+      if (typeof option == 'string') { data[option]( ); }
+    });
+  };
 
-  if (jQuery("#"+id).hasClass("left-preffered") || doc_w < mw_width + link.left + link.width + margin) {
-    // try to display left if preffered left or no space at right
-    if (mw_width < link.left) {
-      cur_window.css("left", link.left - margin - mw_width + jQuery(document).scrollLeft( ));
-      mw_class_lr = 'mw-left';
+  $.fn.modal_window.defaults = {
+    window_top_class: 'mw-top',
+    window_bottom_class: 'mw-bottom',
+    window_left_class: 'mw-left',
+    window_right_class: 'mw-right',
+    window_block_class: 'mw-block',
+    link_opts: {
+      click_out: false,
+      over_parent_window: false,
+      static_content_only: false,
+      refreshable: false,
+      parent_loader: false,
+      block_preferred: false,
+      left_preferred: false,
+      top_preferred: false,
+      mw_mobile: false
     }
-  }
+  };
+  $.fn.modal_window.z_index = 1100;
+  $.fn.modal_window.mobile_z_index = 10000;
 
+  $.fn.modal_window.Constructor = modal_window;
+} (window.jQuery);
 
-  // vertical position - default down
-  cur_window.css('top', link.top+jQuery(document).scrollTop());
+!function($) {
+  "use strict";
 
-  if ( jQuery('#'+id).hasClass('top-preffered') || doc_h < link.top + mw_height - link.height) { // && cur_window.outerHeight() < link.top+link.height) {
-    // try to display as preffered no space bottom or top-preffered and
-    if (mw_height < link.top+link.height) {
-      cur_window.css('top', link.top+jQuery(document).scrollTop()+link.height-mw_height);
-      mw_class_tb = 'mw-top'
+  var modal_window_single = function(element, options) {
+    this.current_id = RMPlus.Utils.create_guid();
+    this.options = $.extend(true, {}, $.fn.modal_window.defaults, options || {});
+
+    this.$window = $(element);
+    this.detect_options();
+
+    this._append_mobile_close();
+
+    this.$window.css('z-index', $.fn.modal_window.z_index);
+    $(document.body).prepend(this.$window);
+
+    this.detect_mask();
+
+    this.visible = false;
+    this.listen();
+  };
+
+  modal_window_single.prototype = $.extend({}, $.fn.modal_window.Constructor.prototype, {
+    constructor: modal_window_single,
+    detect_options: function() {
+      var classes = this.$window.attr('class');
+      if (classes && classes.length > 0) {
+        classes = classes.split(' ');
+        var cl = '';
+        for (var sch = 0; sch < classes.length; sch ++) {
+          cl = classes[sch].replace('-', '_');
+          if (cl in this.options.link_opts && this.options.link_opts[cl] == false) {
+            this.options.link_opts[cl] = true;
+          }
+        }
+      }
+    },
+    listen: function() {
+      if (!this.options.link_opts.click_out) {
+        this.$window.on('mouseleave.modal_window_single', $.proxy(this.mouse_leave_window, this));
+      }
+      this.$mask.on('click.modal_window_single', $.proxy(this.hide, this));
+      this.$window.on('click.modal_window_single', '.mw-close', $.proxy(this.hide, this));
+      $(window).resize($.proxy(this.window_resize, this));
+    },
+    window_resize: function() {
+      if (this.visible && this.current_point) {
+        this.show(this.current_point);
+      }
+    },
+    show: function(point) {
+      this.current_point = point;
+      var offset = {};
+      if (this.options.link_opts.mw_mobile) {
+        offset = this._get_position_mobile();
+        this.$window.css('height', offset.height);
+        this.$window.css('width', offset.width);
+      } else {
+        offset = this._get_position( { top: point.top, left: point.left, width: 1, height: 1 } );
+      }
+
+      this.$window.css('left', offset.left);
+      this.$window.css('top', offset.top);
+      this.$window.removeClass(this.options.window_top_class + ' ' + this.options.window_bottom_class + ' ' + this.options.window_left_class + ' ' + this.options.window_right_class + ' ' + this.options.window_block_class);
+      this.$window.addClass(offset.class_lr).addClass(offset.class_tb).addClass(offset.class_block);
+
+      if (!this.visible) {
+        this.$window.show().trigger('modal_window_shown');
+        this.show_mask();
+        this.visible = true;
+
+        this.$window.find('input, select, textarea').filter(':visible:first').focus();
+
+        if (this.options.link_opts.over_parent_window) {
+          this.hide_windows(this.$parent_window);
+          this.$window.zIndex(this.$parent_window.zIndex() + 2);
+        } else {
+          this.hide_windows();
+        }
+      }
+    },
+    hide: function() {
+      if (this.visible) {
+        this.$window.hide().trigger('modal_window_hidden');
+        this.hide_mask();
+        this.visible = false;
+      }
+    },
+    destroy_if_needed: function() {
+      return false;
+    },
+    destroy: function() {
+      this.$mask.remove();
+      this.$mask = undefined;
+      this.$window.off('.modal_window_single').removeData('modal_window_single');
+      $(window).off('resize.modal_window.' + this.current_id);
+      this.$window = undefined;
     }
-  }
+  });
 
-  cur_window.removeClass('mw-top').removeClass('mw-left').removeClass('mw-right').removeClass('mw-bottom');
-  cur_window.addClass(mw_class_lr).addClass(mw_class_tb);
+  $.fn.modal_window_single = function(option) {
+    return this.each(function() {
+      var $this = $(this)
+          , data = $this.data('modal_window_single')
+          , options = typeof option == 'object' && option;
+      if (!data) {
+        $this.data('modal_window_single', (data = new modal_window_single(this, options)));
+      }
+      if (typeof option == 'string') { data[option]( ); }
+    });
+  };
 
-  cur_window.show();
-  cur_window.trigger('modal_window_shown');
-
-  if (cur_window.find('div.select2-container, input.ui-autocomplete-input').length > 0){
-    var offset = cur_window.offset();
-    cur_window.attr('data-left', offset.left);
-    cur_window.attr('data-top', offset.top);
-  }
-}
+  $.fn.modal_window_single.Constructor = modal_window_single;
+} (window.jQuery);

@@ -1,54 +1,98 @@
-<% settings = @settings.is_a?(Hash) ? @settings : {} %>
-
+<% defaults = Redmine::Plugin::registered_plugins[:a_common_libs].settings[:default]
+   autoconfig_libs = settings['autoconfig_libs'] || defaults[:autoconfig_libs]
+   autoconfig_libs = nil if autoconfig_libs.blank?
+   auto = Redmine::Plugin::registered_plugins[:a_common_libs].settings[:auto]
+   settings = autoconfig_libs ? auto : @settings
+ %>
 <h3><%= l(:including_external_libraries) %></h3>
-
+<div style="overflow: hidden">
+  <label style="margin-left: 0; width: auto; font-weight: normal;">
+    <%=hidden_field_tag 'settings[autoconfig_libs]', nil%>
+    <%=check_box_tag 'settings[autoconfig_libs]', autoconfig_libs, autoconfig_libs %>
+    &mdash; <%= l(:autoconfig_libs).html_safe %>
+  </label>
+</div>
 <div style="overflow: hidden">
   <label style="margin-left: 0px; width: auto; font-weight: normal;">
+    <%=hidden_field_tag 'settings[enable_select2_lib]', auto['enable_select2_lib'] %>
     <%=check_box_tag 'settings[enable_select2_lib]', true, settings['enable_select2_lib'] %>
     &mdash; <%= l(:settings_enable_select2_lib).html_safe %>
   </label>
 </div>
 <div style="overflow: hidden">
   <label style="margin-left: 0px; width: auto; font-weight: normal;">
-    <%=check_box_tag 'settings[enable_highcharts_lib]', true, settings['enable_highcharts_lib'] %>
-    &mdash; <%=l(:settings_enable_highcharts_lib).html_safe %>
+    <%=hidden_field_tag 'settings[enable_jqplot_lib]', auto['enable_jqplot_lib'] %>
+    <%=check_box_tag 'settings[enable_jqplot_lib]', true, settings['enable_jqplot_lib'] %>
+    &mdash; <%=l(:settings_enable_jqplot_lib).html_safe %>
   </label>
 </div>
 <div style="overflow: hidden">
   <label style="margin-left: 0px; width: auto; font-weight: normal;">
+    <%=hidden_field_tag 'settings[enable_bootstrap_lib]', auto['enable_bootstrap_lib'] %>
     <%=check_box_tag 'settings[enable_bootstrap_lib]', true, settings['enable_bootstrap_lib'] %>
     &mdash; <%=l(:settings_enable_bootstrap_lib).html_safe %>
   </label>
 </div>
 <div style="overflow: hidden">
   <label style="margin-left: 0px; width: auto; font-weight: normal; padding-left: 40px;">
+    <%=hidden_field_tag 'settings[enable_bootstrap_lib_for_luxury_buttons]', auto['enable_bootstrap_lib_for_luxury_buttons'] %>
     <%=check_box_tag 'settings[enable_bootstrap_lib_for_luxury_buttons]', true, settings['enable_bootstrap_lib_for_luxury_buttons'] %>
     &mdash; <%=l(:settings_enable_bootstrap_lib_for_luxury_buttons).html_safe %>
   </label>
 </div>
 <div style="overflow: hidden">
   <label style="margin-left: 0px; width: auto; font-weight: normal;">
+    <%=hidden_field_tag 'settings[enable_qmpicker]', auto['enable_qmpicker'] %>
     <%=check_box_tag 'settings[enable_qmpicker]', true, settings['enable_qmpicker'] %>
     &mdash; <%=l(:settings_enable_qmpicker_lib).html_safe %>
   </label>
 </div>
 <div style="overflow: hidden">
   <label style="margin-left: 0px; width: auto; font-weight: normal;">
+    <%=hidden_field_tag 'settings[enable_javascript_patches]', auto['enable_javascript_patches'] %>
     <%=check_box_tag 'settings[enable_javascript_patches]', true, settings['enable_javascript_patches'] %>
     &mdash; <%=l(:settings_enable_javascript_patches).html_safe %>
   </label>
 </div>
 <div style="overflow: hidden">
   <label style="margin-left: 0px; width: auto; font-weight: normal;">
+    <%=hidden_field_tag 'settings[enable_modal_windows]', auto['enable_modal_windows'] %>
     <%=check_box_tag 'settings[enable_modal_windows]', true, settings['enable_modal_windows'] %>
     &mdash; <%=l(:settings_enable_modal_windows).html_safe %>
   </label>
 </div>
 <div style="overflow: hidden">
   <label style="margin-left: 0px; width: auto; font-weight: normal;">
+    <%=hidden_field_tag 'settings[enable_font_awesome]', auto['enable_font_awesome'] %>
     <%=check_box_tag 'settings[enable_font_awesome]', true, settings['enable_font_awesome'] %>
     &mdash; <%=l(:settings_enable_font_awesome).html_safe %>
   </label>
 </div>
+<div style="overflow: hidden">
+  <label style="margin-left: 0; width: auto; font-weight: normal;">
+    <%=hidden_field_tag 'settings[enable_periodpicker]', auto['enable_periodpicker'] %>
+    <%=check_box_tag 'settings[enable_periodpicker]', true, settings['enable_periodpicker'] %>
+    &mdash; <%=l(:settings_enable_periodpicker).html_safe %>
+  </label>
+</div>
+<div style="overflow: hidden">
+  <label style="margin-left: 0; width: auto; font-weight: normal;">
+    <%=hidden_field_tag 'settings[enable_ajax_counters]', auto['enable_ajax_counters'] %>
+    <%=check_box_tag 'settings[enable_ajax_counters]', true, settings['enable_ajax_counters'] %>
+    &mdash; <%=l(:settings_enable_ajax_counters).html_safe %>
+  </label>
+</div>
 
+
+<script type="text/javascript">
+$("#settings_autoconfig_libs[type = 'checkbox']").click(function(){
+  $('#settings input[id]').slice(2).prop("disabled", this.checked);
+  $('#settings input[id][type = "hidden"]').slice(1).prop("disabled", !this.checked);
+});
+if ($("#settings_autoconfig_libs[type = 'checkbox']").prop('checked')){
+  $('#settings input[id]').slice(2).prop("disabled", true);
+}else{
+  $('#settings input[id][type = "hidden"]').slice(1).prop("disabled", true);
+}
+</script>
 <%= render file: File.join(File.dirname(__FILE__), '_rmplus_logo.html.erb') %>
