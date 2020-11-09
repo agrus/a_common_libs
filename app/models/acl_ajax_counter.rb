@@ -1,5 +1,5 @@
 class AclAjaxCounter < ActiveRecord::Base
-  attr_protected :id
+  #  attr_protected :id
 
   serialize :options
   def self.all_tokens

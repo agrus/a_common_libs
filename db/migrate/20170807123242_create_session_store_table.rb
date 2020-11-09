@@ -1,5 +1,5 @@
 #  coding: utf-8
-class CreateSessionStoreTable < ActiveRecord::Migration
+class CreateSessionStoreTable < ActiveRecord::Migration[5.0]
 
   def self.up
     unless ActiveRecord::Base.connection.table_exists? 'sessions'

@@ -1,4 +1,4 @@
-class AddFavouriteProject < ActiveRecord::Migration
+class AddFavouriteProject < ActiveRecord::Migration[5.0]
 
   def self.up
     # compatibility with usability

@@ -1,4 +1,4 @@
-class AddTrimMultipleCustomValues < ActiveRecord::Migration
+class AddTrimMultipleCustomValues < ActiveRecord::Migration[5.0]
   def up
     if ActiveRecord::Base.connection.column_exists?(:custom_fields, :lb_trim_multiple)
       rename_column :custom_fields, :lb_trim_multiple, :acl_trim_multiple

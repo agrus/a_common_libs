@@ -1,4 +1,4 @@
-class CreateTableApiLogForPlugins < ActiveRecord::Migration
+class CreateTableApiLogForPlugins < ActiveRecord::Migration[5.0]
   def change
     create_table :api_log_for_plugins do |t|
       t.text :plugin_code, null: false
