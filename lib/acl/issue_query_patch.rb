@@ -3,9 +3,15 @@ module Acl
   module IssueQueryPatch
     def self.included(base)
       base.send :prepend, InstanceMethods
+
+      base.class_eval do
+        cattr_accessor :acl_stored_filter_types
+      end
     end
 
+
     module InstanceMethods
+
       def add_available_filter(field, options)
         if field.present? && options[:type].present?
           if self.class.acl_stored_filter_types.blank?

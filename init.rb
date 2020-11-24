@@ -5,7 +5,7 @@ Redmine::Plugin.register :a_common_libs do
   name 'A common libraries'
   author 'Danil Kukhlevskiy'
   description 'This is a plugin for including common libraries'
-  version '2.4.6'
+  version '2.5.0'
   url 'http://rmplus.pro/'
   author_url 'http://rmplus.pro/'
 
@@ -31,7 +31,7 @@ Redmine::Plugin.register :a_common_libs do
     p.actions << 'issues/acl_edit_form'
   end
 end
-
+Issue.send :prepend, Acl::ActsAsCustomizablePatch::AclInstanceMethods
 ActiveRecord::Base.send :prepend, Acl::ActsAsCustomizablePatch
 
 Rails.application.config.to_prepare do

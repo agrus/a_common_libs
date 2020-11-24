@@ -1,23 +1,5 @@
 module Acl
   module ActsAsCustomizablePatch
-    def self.included(base)
-      base.extend ClassMethods
-
-      base.class_eval do
-        class << self
-          alias_method_chain :acts_as_customizable, :acl
-        end
-      end
-    end
-
-    module ClassMethods
-      def acts_as_customizable(options={})
-        super(options)
-        return if self.included_modules.include?(Acl::ActsAsCustomizablePatch::AclInstanceMethods)
-        send :include, Acl::ActsAsCustomizablePatch::AclInstanceMethods
-      end
-    end
-
     module AclInstanceMethods
       def self.included(base)
         base.class_eval do

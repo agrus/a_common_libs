@@ -2,7 +2,7 @@ module Acl::Patches::Models
   module IssuePatch
     def self.included(base)
       base.send :prepend, InstanceMethods
-      base.send :prepend, ClassMethods
+      base.extend(ClassMethods)
 
       base.class_eval do
         attr_accessor :acl_cf_casted_values
@@ -199,7 +199,7 @@ module Acl::Patches::Models
           end
         end
 
-        send :super=, attrs, user
+         super(attrs, user)
       end
     end
   end

@@ -87,7 +87,7 @@ module Acl::Patches::Models
       if action == '='
         self.acl_changed = Array.wrap(self.value_was).to_set != Array.wrap(vl).to_set
         # Rails.logger.debug "\n --------------------- #{self.custom_field.id}: [#{self.acl_changed.inspect}] #{self.value_was.inspect}; #{vl.inspect}"
-        send :super=, vl
+        super(vl)
       else
         value = Array.wrap(vl)
         value = value.first unless self.custom_field.multiple?
@@ -105,7 +105,7 @@ module Acl::Patches::Models
         end
 
         self.acl_changed = Array.wrap(self.value_was).to_set != Array.wrap(value).to_set
-        send :super=, value
+        super(value)
       end
     end
 
